@@ -14,6 +14,7 @@ from pip._internal.network.download import Downloader
 from pip._internal.network.session import PipSession
 from pip._internal.operations.prepare import unpack_url
 from pip._internal.utils.hashes import Hashes
+from pip._vendor.requests import Response
 
 from tests.lib import TestData
 from tests.lib.requests_mocks import MockResponse
@@ -25,7 +26,7 @@ def test_unpack_url_with_urllib_response_without_content_type(data: TestData) ->
     """
     _real_session = PipSession()
 
-    def _fake_session_get(*args: Any, **kwargs: Any) -> dict[str, str]:
+    def _fake_session_get(*args: Any, **kwargs: Any) -> Response:
         resp = _real_session.get(*args, **kwargs)
         del resp.headers["Content-Type"]
         return resp
@@ -73,12 +74,12 @@ def test_download_http_url__no_directory_traversal(
     session.resume_retries = 0
     resp = MockResponse(contents)
     resp.url = mock_url
-    resp.headers = {
+    resp.headers.update({
         # Set the content-type to a random value to prevent
         # mimetypes.guess_extension from guessing the extension.
         "content-type": "random",
         "content-disposition": 'attachment;filename="../out_dir_file"',
-    }
+    })
     session.get.return_value = resp
     download = Downloader(session, progress_bar="on")
 
